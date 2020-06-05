@@ -47,8 +47,9 @@ public class MainActivity extends AppCompatActivity {
             Http_tools tools = new Http_tools();
             try {
                 String[] data = tools.mysql();
-                String cookie = " whistle-spaserver=s%3AqFAmGsznuyGhvNxiPCaO7Nm6-blSN-Rz.yT88tDPh1Xop7BN4iy%2FN4ufULhn2W423%2FFyN1a6wbXI; ";
-                JSONObject json = new JSONObject(tools.get(cookie, Class_name));
+
+                String[] cookie = data[0].split(",");
+                JSONObject json = new JSONObject(tools.get(cookie[2], Class_name));
                 int len = json.getJSONObject("data").getJSONArray("users").length();
                 InternetAddress[] address = new InternetAddress[len];
                 int count = 0;
