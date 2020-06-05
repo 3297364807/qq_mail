@@ -1,8 +1,17 @@
 package com.example.test2;
+
 import android.os.Bundle;
 import android.os.SystemClock;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Properties;
+
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -10,46 +19,47 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-public class MainActivity  extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        new Thread(()->{
+        new Thread(() -> {
+            Http_tools tools = new Http_tools();
+            try {
+                String[] data = tools.mysql();
 
+                String cookie = "[{\"key\":\"Cookie\",\"value\":\"whistle-spaserver=s%3A_b2ZastbhP5EIfyamKc0iQZyc4uWLp-Q.y%2FiP1kj00cYmXLvX1zKx2FP2zab4kKgy9PdylVFPnzs;\",\"description\":\"\",\"type\":\"text\",\"enabled\":true}]";
+                JSONObject json = new JSONObject(tools.get(cookie, "1649"));
+                for(int i=0;i<json.getJSONObject("data").getJSONArray("users").length();i++){
+                    String name = json.getJSONObject("data").getJSONArray("users").getJSONObject(i).getString("user_name");
+                    int report = json.getJSONObject("data").getJSONArray("users").getJSONObject(i).getInt("is_report");
+                    if (report == 1) {
+                        System.out.println(name + "：已打卡");
+                    } else {
+                        System.out.println(name + "：未打卡");
+                        for(int j=0;j<data.length;j++){
+                            String[] qq_name=data[j].split(",");//qq_name[0]是姓名  [1]是qq号
+                            if(name.equals(qq_name[0])){//找到姓名
+
+
+                            }
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 //                QQMail_Send();
-
         }).start();
     }
-    private static void QQMail_Send() throws AddressException,MessagingException{
-        SystemClock.sleep(2000);
-        Properties properties = new Properties();
-        properties.put("mail.transport.protocol", "smtp");// 连接协议
-        properties.put("mail.smtp.host", "smtp.qq.com");// 主机名
-        properties.put("mail.smtp.port", 465);// 端口号
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.ssl.enable", "true");// 设置是否使用ssl安全连接 ---一般都使用
-        properties.put("mail.debug", "true");// 设置是否显示debug信息 true 会在控制台显示相关信息
-// 得到回话对象
-        Session session = Session.getInstance(properties);
-// 获取邮件对象
-        Message message = new MimeMessage(session);
-// 设置发件人邮箱地址
-        message.setFrom(new InternetAddress("3297364807@qq.com"));
-// 设置收件人邮箱地址
-        InternetAddress[] Add=new InternetAddress[1];
-        Add[0]=new InternetAddress("1414394854@qq.com");
-        message.setRecipients(Message.RecipientType.TO, Add);//多个收件人
-// 设置邮件标题
-        message.setSubject("微哨打卡");
-// 设置邮件内容
-        message.setText("亲爱的同学你的微哨未打卡，请尽快打卡哟");
-// 得到邮差对象
-        Transport transport = session.getTransport();
-// 连接自己的邮箱账户
-        transport.connect("3297364807@qq.com", "cvxidvggrrehchdd");// 密码为QQ邮箱开通的stmp服务后得到的客户端授权码
-// 发送邮件
-        transport.sendMessage(message, message.getAllRecipients());
-        transport.close();
-    }
+
+
 }

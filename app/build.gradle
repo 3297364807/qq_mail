@@ -39,4 +39,5 @@ dependencies {
     implementation files('libs\\activation.jar')
     implementation files('libs\\additionnal.jar')
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
+    implementation files('libs\\mysql-connector-java-5.1.39-bin.jar')
 }
