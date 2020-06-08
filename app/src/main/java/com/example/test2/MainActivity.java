@@ -32,16 +32,65 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private TextView tv1, tv2, tv3, tv4, tv5, tv6, tv7;
     private AlertDialog dialog;
-    private String number=null;
+    private String number = null;
     private ProgressDialog progressDialog;
-    private Handler handler=new Handler();
+    private Handler handler = new Handler();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+//        String[] name={"3297364807@qq.com","2392630994@qq.com","3297364807@qq.com","3216869767@qq.com","3216869767@qq.com","3297364807@qq.com"};
+//        new Thread(()->{
+//            try {
+//                for(int i=0;i<name.length;i++){
+//                    fason(new InternetAddress(name[i]));
+//                    SystemClock.sleep(3000);
+//                }
+//            } catch (MessagingException e) {
+//                e.printStackTrace();
+//            }
+//        }).start();
+//        InternetAddress[] add = new InternetAddress[2];
+//        add[0] = new InternetAddress();
+//        add[1] = new InternetAddress();
+
         initShow();
         initCheck();
     }
+
+    private void fason(InternetAddress is) throws MessagingException {
+        Properties properties = new Properties();
+        properties.put("mail.transport.protocol", "smtp");// 连接协议
+        properties.put("mail.smtp.host", "smtp.qq.com");// 主机名
+        properties.put("mail.smtp.port", 465);// 端口号
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.ssl.enable", "true");// 设置是否使用ssl安全连接 ---一般都使用
+        properties.put("mail.debug", "true");// 设置是否显示debug信息 true 会在控制台显示相关信息
+// 得到回话对象
+        Session session = Session.getInstance(properties);
+// 获取邮件对象
+        Message message = new MimeMessage(session);
+// 设置发件人邮箱地址
+        message.setFrom(new InternetAddress("2392630994@qq.com"));
+//       InternetAddress[] Add = new InternetAddress("1414394854@qq.com");
+//        message.setRecipient(Message.RecipientType.TO, new InternetAddress("2392630994@qq.com"));//单个收件人
+
+        message.setRecipient(Message.RecipientType.TO, is);  //dd多个收件人
+// 设置邮件标题
+        message.setSubject("唐智：微哨打卡提醒");
+// 设置邮件内容
+        message.setText("亲爱的同学你的微哨未打卡，请尽快打卡哟 来自邮箱：3297364807提醒");
+// 得到邮差对象
+        Transport transport = session.getTransport();
+// 连接自己的邮箱账户
+        transport.connect("2392630994@qq.com", "apoxpxyrmiiueafi");// 密码为QQ邮箱开通的stmp服务后得到的客户端授权码
+// 发送邮件
+        transport.sendMessage(message, message.getAllRecipients());
+        transport.close();
+    }
+
+
     private void init_Request(String Class_name) {
         new Thread(() -> {
             Http_tools tools = new Http_tools();
@@ -51,31 +100,94 @@ public class MainActivity extends AppCompatActivity {
                 String[] cookie = data[0].split(",");
                 JSONObject json = new JSONObject(tools.get(cookie[2], Class_name));
                 int len = json.getJSONObject("data").getJSONArray("users").length();
-                InternetAddress[] address = new InternetAddress[len];
+                String[] address = new String[len];
                 int count = 0;
                 for (int i = 0; i < len; i++) {
                     String name = json.getJSONObject("data").getJSONArray("users").getJSONObject(i).getString("user_name");
                     int report = json.getJSONObject("data").getJSONArray("users").getJSONObject(i).getInt("is_report");
                     if (report == 1) {
-                        System.out.println(name + "：已打卡");
+                        Log.e(TAG, name + "：已打卡");
                     } else {
                         Log.e(TAG, name + "：未打卡");
                         for (int j = 0; j < data.length; j++) {//找到对应的名字
                             if (data[j] != null) {
                                 String[] qq_name = data[j].split(",");//qq_name[0]is name  [1]is QQ NO
-                                System.out.println(data[j] + ">>>>>");
-                                if (name.equals(qq_name[0])) {//找到姓名
-                                    address[count] = new InternetAddress(qq_name[1] + "@qq.com");
-                                    count++;
+                                if (name.equals(qq_name[0])) {//找到姓名.
+                                    if (address.length > count) {
+                                        address[count] = qq_name[1] + "@qq.com";
+                                        count++;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                //start request
+                Log.e(TAG, String.valueOf(count));
+                for (int i = 0; i < address.length; i++) {
+                    if(address[i]!=null){
+                        Log.e(TAG, address[i]);
+                    }
 
-                tools.QQMail_Send(address,this,handler,progressDialog);
+                }
+//                if (count > 0) {
+//                    for (int i = 0; i < address.length; i++) {
+//                        if (address[i] != null) {
+//                            fason(new InternetAddress(address[i]));
+//                            SystemClock.sleep(3000);
+//                        }
+//                    }
+//                    handler.post(() -> {
+//                        progressDialog.dismiss();
+//                        Toast.makeText(this, "发送完毕", Toast.LENGTH_SHORT).show();
+//                    });
+//                } else {
+//                    handler.post(() -> {
+//                        progressDialog.dismiss();
+//                        Toast.makeText(this, "全班已打卡完成", Toast.LENGTH_SHORT).show();
+//                    });
+//                }
 
+
+                if (count > 0) {
+                    if (count < 5) {
+                        for (int i = 0; i < count; i++) {
+                            tools.QQMail_Send2(new InternetAddress(address[i]));
+                        }
+                        handler.post(() -> {
+                            progressDialog.dismiss();
+                            Toast.makeText(this, "发送完毕", Toast.LENGTH_SHORT).show();
+                        });
+                    } else {
+
+                        int count_ = 1;
+                        for (int i = 0; i < count; i++) {
+
+                            if (count_ % 5 == 0) {
+                                InternetAddress[] name = new InternetAddress[5];
+                                for (int j = i, s = 0; j > i - 5; j--, s++) {//每隔五位执行一次
+                                    name[s] = new InternetAddress(address[j]);
+                                }
+                                Log.e(TAG, "开始执行");
+                                tools.QQMail_Send(name);//这里是每5位次执行一次
+                                if (count - 1 - i < 5) {//计算最后还剩几位
+                                    for (int s = i; s < i + count - 1 - i; s++) {
+                                        tools.QQMail_Send2(new InternetAddress(address[s]));
+                                    }
+                                }
+                            }
+                            count_++;
+                        }
+                        handler.post(() -> {
+                            progressDialog.dismiss();
+                            Toast.makeText(this, "发送完毕", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                } else {
+                    handler.post(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(this, "全班已打卡完成", Toast.LENGTH_SHORT).show();
+                    });
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -83,43 +195,48 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
-                e.printStackTrace();
-            } catch (AddressException e) {
+                e.printStackTrace();} catch (AddressException e) {
                 e.printStackTrace();
             } catch (MessagingException e) {
                 e.printStackTrace();
             }
-//                QQMail_Send();
+//            } catch (AddressException e) {
+//                e.printStackTrace();
+//            } catch (MessagingException e) {
+//                e.printStackTrace();
+//            }
+
+
         }).start();
     }
 
     private void initCheck() {
         tv1.setOnClickListener(v -> {
-            number="1649";
+            number = "1649";
             dialog.show();
         });
         tv2.setOnClickListener(v -> {
-            number="1650";
+            number = "1650";
             dialog.show();
         });
         tv3.setOnClickListener(v -> {
-            number="1651";
+            number = "1651";
             dialog.show();
         });
         tv4.setOnClickListener(v -> {
-            number="1652";
+            number = "1652";
             dialog.show();
         });
         tv5.setOnClickListener(v -> {
-            number="1653";
+            number = "1653";
             dialog.show();
         });
         tv6.setOnClickListener(v -> {
-            number="1654";
+            number = "1654";
             dialog.show();
         });
         tv7.setOnClickListener(v -> {
-            number="1655";
+            number = "1655";
             dialog.show();
         });
     }
@@ -132,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
         tv5 = findViewById(R.id.btn5);
         tv6 = findViewById(R.id.btn6);
         tv7 = findViewById(R.id.btn7);
-        progressDialog=new ProgressDialog(this);
+        progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("微哨打卡");
         progressDialog.setMessage("加载中....");
         progressDialog.setCancelable(false);
@@ -140,10 +257,10 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(number!=null){
+                        if (number != null) {
                             progressDialog.show();
                             init_Request(number);
-                        }else {
+                        } else {
                             Toast.makeText(MainActivity.this, "班级为空的", Toast.LENGTH_SHORT).show();
                         }
                     }
